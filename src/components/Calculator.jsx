@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import Button from "./Button";
+import * as math from 'mathjs';
+
 const Calculator = () =>{
     const [numberStack, setNumberStack] = useState([]);
     const [firstNumber, setFirstNumber] = useState('');
@@ -10,6 +12,7 @@ const Calculator = () =>{
     const [numberClicked, setNumberClicked] = useState(false);
     const [stack, setStack] = useState([]);
     const [history, setHistory] = useState([]);
+    const [isCleared, setIsCleared] = useState(false);
     const handleNumberClick = (value) =>{
         if (value === 0 && numberStack.length === 0 && !numberClicked) {
             return;
@@ -18,7 +21,7 @@ const Calculator = () =>{
             if(numberStack.includes(pi)){
                 setNumberStack([value]);
             }else{
-                if(hasSelected){
+            if(hasSelected){    
                     return;
                 }
                 else{
@@ -28,13 +31,17 @@ const Calculator = () =>{
             }
         }
     };
-    const handleClearClick = () =>{
+    const handleClearClick = () =>{        
+        if(numberStack.length == 0 && isCleared){
+            setHistory([]);
+        }
         setFirstNumber('')
         setStack([]);
         setNumberStack([]);
         setOperation('');
         setNumberClicked(false);
         setHasSelected(false);
+        setIsCleared(true)
 
     };
     const handlePointClick = (value) => {
@@ -65,6 +72,30 @@ const Calculator = () =>{
             setNumberStack((prevStack) => [...prevStack, pi]);
         }
     };
+    const handlePowerN = () =>{
+        if(numberStack.length === 0){
+            const num = 10 
+            const result = Math.pow(num, 0);
+            const expression = `${num} ^(0) = ${result}`;
+            
+            setFirstNumber('');
+            setNumberStack([result]);
+            setStack([`${num}^(0)`]);
+            setHistory([...history, expression]);
+            setNumberStack([result]);
+        }else{
+
+            const num = 10;
+            const result = Math.pow( num, parseFloat(numberStack.join('')));
+            const expression = `${num} ^ ${numberStack.join('')} = ${result}`;
+
+            setFirstNumber('');
+            setNumberStack([result]);
+            setStack([`${num}^${numberStack.join('')}`]);
+            setHistory([...history, expression]);
+            setNumberStack([result]);
+        }
+    }
     const handleOperationClick = (operation) => {
         let newExpression;
         if (numberStack.length === 0) {
@@ -117,22 +148,23 @@ const Calculator = () =>{
     
     const handleEqualsClick = () => {
         let result = 0;
+        let numStackValue = numberStack.length > 0 ? parseFloat(numberStack.join('')) : 0;
         if(operation === '+'){
-            result = parseFloat(firstNumber) + parseFloat(numberStack.join(''));
+            result = parseFloat(firstNumber) + numStackValue;
         }
         if(operation === 'x'){
-            result = parseFloat(firstNumber) * parseFloat(numberStack.join(''));
+            result = parseFloat(firstNumber) * numStackValue;
         }
         if(operation === '-'){
-            result = parseFloat(firstNumber) - parseFloat(numberStack.join(''));
+            result = parseFloat(firstNumber) - numStackValue;
         }
         if(operation === '÷'){
-            result = parseFloat(firstNumber) / parseFloat(numberStack.join(''));
+            result = parseFloat(firstNumber) / numStackValue;
         }
         if(operation === '^'){
-            result = Math.pow(parseFloat(firstNumber), parseFloat(numberStack.join('')));
+            result = Math.pow(parseFloat(firstNumber), numStackValue);
         }
-        const expression = `${firstNumber} ${operation} ${numberStack.join('')} = ${result}`;
+        const expression = `${firstNumber} ${operation} ${numStackValue} = ${result}`;
         setHistory([...history, expression]);
         
         setHasSelected(false);
@@ -183,7 +215,50 @@ const Calculator = () =>{
             return;
         }
     }
+    const handleFactorial = () => { 
+        if(numberStack.length === 0){
+            const dummy = 0;
+            const factorial = math.factorial(dummy);
+            const expression = `${dummy}! = ${factorial}`;
 
+            setStack([`${dummy}!`]);
+            setFirstNumber('');
+            setHistory([...history, expression]);
+            setNumberStack([factorial]);
+
+        }
+        else{
+            const num = parseFloat(numberStack.join(''));
+            const factorial = math.factorial(num);
+            const expression = `${numberStack.join('')}! = ${factorial}`;
+
+            setStack([`${num}!`]);
+            setFirstNumber('');
+            setHistory([...history, expression]);
+            setNumberStack([factorial]);
+        }
+            
+    }
+    const handleLogClick = () => { 
+        if(numberStack.length === 0){
+            setNumberStack(["Invalid Input"]);
+            setStack(["log(0)"])
+        }
+        else{
+            const logNum = parseFloat(numberStack.join(''));
+            if(logNum <= 0){
+                setNumberStack(["Invalid Input"]);
+                setStack(["log(0)"]);
+            }else{
+                const result = Math.log(logNum);
+                const expression = `log(${logNum} = ${result})`;
+                setHistory([...history, expression]);
+                setStack([`log(${logNum})`]);
+                setFirstNumber('');
+                setNumberStack([result]);
+            }
+        }
+    }
     useEffect(() => {
         if(stack.length === 0){
             return;
@@ -200,7 +275,7 @@ const Calculator = () =>{
                             {stack}
                         </label>
                         <label
-                            className="w-full rounded text-5xl h-14 text-right font-bold pr-2 overflow-hidden" style={{ direction: 'ltr', whiteSpace: 'nowrap', animation: 'scrollText linear infinite 5s' }}
+                            className="w-full rounded text-5xl h-14 text-right font-bold pr-2 border-2 shadow-md overflow-hidden" style={{ direction: 'ltr', whiteSpace: 'nowrap', animation: 'scrollText linear infinite 5s' }}
                         >{numberStack.length === 0 ? '0': numberStack.join('')}</label>
                     </div>
                     <div className="grid-cols-7 w-full">
@@ -269,6 +344,7 @@ const Calculator = () =>{
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-1 shadow-md md:w-20 lg:w-24"
                                 label = "n!"
+                                onClick={handleFactorial}
                             />
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-0 shadow-md md:w-20 lg:w-24"
@@ -306,6 +382,7 @@ const Calculator = () =>{
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-0 shadow-md md:w-20 lg:w-24"
                                 label = "10^x"
+                                onClick={handlePowerN}
                             />
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-1 shadow-md md:w-20 lg:w-24"
@@ -332,6 +409,7 @@ const Calculator = () =>{
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-0 shadow-md md:w-20 lg:w-24"
                                 label = "log"
+                                onClick={handleLogClick}
                             />
                             <Button
                                 className="p-2 border rounded h-10 w-20 m-1 shadow-md md:w-20 lg:w-24"
@@ -380,6 +458,14 @@ const Calculator = () =>{
                                 onClick={handleEqualsClick}
                             />
                         </div>
+                    </div>
+                </div>
+                <div className="flex flex-col items-center justify-center mt-4">
+                    <h2 className="text-lg font-bold mb-2">History</h2>
+                    <div className="p-2 w-[80vw] md:w-[40vw] lg:w-[20vw] overflow-y-auto h-auto flex flex-col items-center">
+                        {history.slice().reverse().map((expression, index) => (
+                            <p key={index} className="mb-1">{expression}</p>
+                        ))}
                     </div>
                 </div>
             </div>
